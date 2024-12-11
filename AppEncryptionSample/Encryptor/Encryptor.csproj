@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Title>Encryptor</Title>
+    <Version>1.0.6</Version>
+    <Authors>saeed ahmadi</Authors>
+    <Company>saeed ahmadi</Company>
+    <PackageId>Encryptor</PackageId>
+    <Product>Encryptor</Product>
+    <Description>Encryptor</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EntityFramework" Version="6.5.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+</Project>

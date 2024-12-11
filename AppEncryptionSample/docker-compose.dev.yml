@@ -1,0 +1,20 @@
+services:
+  vault:
+    image: hashicorp/vault:latest
+    container_name: vault
+    ports:
+      - "8200:8200" # Map Vault's port to the host
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: "my-root-token" # Root token for dev mode
+      VAULT_DEV_LISTEN_ADDRESS: "0.0.0.0:8200" # Allow external connections
+    volumes:
+      - ./vault-config:/vault/config # Mount custom configuration
+      - ./vault-data:/vault/data # Persist Vault data
+      - ./vault-certs:/vault/certs # Mount TLS certificates (optional)
+    cap_add:
+      - IPC_LOCK
+    restart: always # Restart the container if it stops unexpectedly
+
+networks:
+  vault-network:
+    driver: bridge
