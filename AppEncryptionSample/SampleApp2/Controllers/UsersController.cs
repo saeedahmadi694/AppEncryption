@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Encryptor.AspNetCore.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,10 +16,12 @@ namespace SampleApp2.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly SampleApp2Context _context;
+    private readonly ITransitService _vaultService;
 
-    public UsersController(SampleApp2Context context)
+    public UsersController(SampleApp2Context context, ITransitService vaultService)
     {
         _context = context;
+        _vaultService = vaultService;
     }
 
     // GET: api/Users

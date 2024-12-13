@@ -1,51 +1,78 @@
-﻿using Encryptor.Config;
+﻿using Encryptor.AspNetCore.Config;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.Extensions.Options;
 
 namespace Encryptor.AspNetCore.Services;
 
 public class EFCoreSetting : IEFCoreSetting
 {
-    private readonly VaultService _vaultService;
-    private readonly EncryptionSettings _encryptionSettings;
+    private readonly ITransitService _transitService;
+    private readonly EncryptionSetting _encryptionSetting;
 
-    public EFCoreSetting(VaultService vaultService)
+    public EFCoreSetting(EncryptionSetting encryptionSetting, ITransitService transitService)
     {
-        _vaultService = vaultService;
+        _encryptionSetting = encryptionSetting;
+        _transitService = transitService;
     }
 
 
-    public async Task EncryptSensitiveColumnsAsync(ChangeTracker changeTracker)
+   
+    public void DecryptSensitiveColumns(object entity)
     {
-        foreach (var entry in changeTracker.Entries().Where(e => e.State is EntityState.Added or EntityState.Modified))
-        {
-            var entityType = entry.Entity.GetType().Name;
-            var column = _encryptionSettings.SensitiveColumns.FirstOrDefault(r => r == entityType);
-            if (!string.IsNullOrEmpty(column))
-            {
-                var property = entry.Property(column);
-                if (property != null && property.CurrentValue is string currentValue)
-                {
-                    property.CurrentValue = await _vaultService.EncryptAsync(currentValue);
-                }
+        var entityType = entity.GetType();
+        var sensitiveProperties = entityType.GetProperties()
+            .Where(p => _encryptionSetting.SensitiveColumns.Contains(p.Name));
 
-            }
-        }
-    }
-
-    public async Task<TEntity> DecryptItemAsync<TEntity>(TEntity entity)
-    {
-        var entityType = entity.GetType().Name;
-        var column = _encryptionSettings.SensitiveColumns.FirstOrDefault(r => r == entityType);
-        if (!string.IsNullOrEmpty(column))
+        foreach (var property in sensitiveProperties)
         {
-            var property = entity.GetType().GetProperty(column);
-            if (property != null && property.GetValue(entity) is string encryptedValue)
+            var value = property.GetValue(entity) as string;
+            if (!string.IsNullOrEmpty(value))
             {
-                var decryptedValue = await _vaultService.DecryptAsync(encryptedValue);
+                var decryptedValue = _transitService.DecryptAsync(value).Result; 
                 property.SetValue(entity, decryptedValue);
             }
         }
-        return entity;
     }
+
+    public void EncryptSensitiveColumns(ChangeTracker changeTracker)
+    {
+        foreach (var entry in changeTracker.Entries()
+            .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified))
+        {
+            var entityType = entry.Entity.GetType();
+            var sensitiveProperties = entityType.GetProperties()
+                .Where(p => _encryptionSetting.SensitiveColumns.Contains(p.Name));
+
+            foreach (var property in sensitiveProperties)
+            {
+                var currentValue = entry.Property(property.Name).CurrentValue as string;
+                if (!string.IsNullOrEmpty(currentValue))
+                {
+                    entry.Property(property.Name).CurrentValue = _transitService.EncryptAsync(currentValue).Result;
+                }
+            }
+        }
+    }
+
+    public async Task EncryptSensitiveColumnsAsync(ChangeTracker changeTracker)
+    {
+        foreach (var entry in changeTracker.Entries()
+            .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified))
+        {
+            var entityType = entry.Entity.GetType();
+            var sensitiveProperties = entityType.GetProperties()
+                .Where(p => _encryptionSetting.SensitiveColumns.Contains(p.Name));
+
+            foreach (var property in sensitiveProperties)
+            {
+                var currentValue = entry.Property(property.Name).CurrentValue as string;
+                if (!string.IsNullOrEmpty(currentValue))
+                {
+                    entry.Property(property.Name).CurrentValue = await _transitService.EncryptAsync(currentValue);
+                }
+            }
+        }
+    }
+
 }

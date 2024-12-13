@@ -1,9 +1,9 @@
 ﻿using System.Text;
 using System.Text.Json;
 
-namespace Encryptor.Services;
+namespace Encryptor.AspNetCore.Services;
 
-public interface IVaultService
+public interface ITransitService
 {
     Task<string> EncryptAsync(string plaintext);
     Task<string> DecryptAsync(string ciphertext);

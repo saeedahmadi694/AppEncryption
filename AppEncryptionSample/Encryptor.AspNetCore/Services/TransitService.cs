@@ -1,16 +1,16 @@
-﻿using Encryptor.Services;
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
 namespace Encryptor.AspNetCore.Services;
 
-public class VaultService : IVaultService
+public class TransitService : ITransitService
 {
-    private readonly HttpClient? _httpClient;
+    private readonly HttpClient _httpClient;
     private readonly string _encryptionKey;
+    private readonly string _path;
 
-    public VaultService(string encryptionKey, string vaultToken, string baseAddress)
+    public TransitService(string encryptionKey, string vaultToken, string baseAddress, string path)
     {
         _encryptionKey = encryptionKey;
         _httpClient = new()
@@ -18,12 +18,13 @@ public class VaultService : IVaultService
             BaseAddress = new Uri(baseAddress),
         };
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", vaultToken);
+        _path = path;
     }
 
     public async Task<string> EncryptAsync(string plaintext)
     {
         var content = new StringContent(JsonSerializer.Serialize(new { plaintext = Convert.ToBase64String(Encoding.UTF8.GetBytes(plaintext)) }), Encoding.UTF8, "application/json");
-        var response = await _httpClient.PostAsync($"/v1/transit/encrypt/{_encryptionKey}", content);
+        var response = await _httpClient.PostAsync($"/v1/{_path}/encrypt/{_encryptionKey}", content);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<JsonElement>(result).GetProperty("data").GetProperty("ciphertext").GetString();
@@ -32,7 +33,7 @@ public class VaultService : IVaultService
     public async Task<string> DecryptAsync(string ciphertext)
     {
         var content = new StringContent(JsonSerializer.Serialize(new { ciphertext }), Encoding.UTF8, "application/json");
-        var response = await _httpClient.PostAsync($"/v1/transit/decrypt/{_encryptionKey}", content);
+        var response = await _httpClient.PostAsync($"/v1/{_path}/decrypt/{_encryptionKey}", content);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadAsStringAsync();
         var plaintext = JsonSerializer.Deserialize<JsonElement>(result).GetProperty("data").GetProperty("plaintext").GetString();

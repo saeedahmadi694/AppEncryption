@@ -1,12 +1,11 @@
-﻿namespace SampleApp2.Models
+﻿namespace SampleApp2.Models;
+
+public class User
 {
-    public class User
-    {
-        public int Id { get; set; }
-        public string FirstName { get; set; }
-        public int LastName { get; set; }
-        public int NationalCode { get; set; }
-        public int Mobile { get; set; }
-        public int PostalCode { get; set; }
-    }
+    public int Id { get; set; }
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+    public string NationalCode { get; set; }
+    public string Mobile { get; set; }
+    public string PostalCode { get; set; }
 }

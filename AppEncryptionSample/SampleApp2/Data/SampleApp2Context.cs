@@ -1,8 +1,6 @@
 ﻿using Encryptor.AspNetCore.Services;
-using Encryptor.Config;
-using Encryptor.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
+using SampleApp2.Data.Interceptors;
 using SampleApp2.Models;
 
 namespace SampleApp2.Data;
@@ -25,5 +23,10 @@ public class SampleApp2Context : DbContext
         return await base.SaveChangesAsync(cancellationToken);
     }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
 
+        optionsBuilder.AddInterceptors(new DecryptMaterializationInterceptor(_coreSetting));
+    }
 }
